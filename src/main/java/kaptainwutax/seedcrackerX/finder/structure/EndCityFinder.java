@@ -62,7 +62,7 @@ public class EndCityFinder extends Finder {
         BlockState endstoneBricks = Blocks.END_STONE_BRICKS.defaultBlockState();
         BlockState purpur = Blocks.PURPUR_BLOCK.defaultBlockState();
         BlockState purpurPillar = Blocks.PURPUR_PILLAR.defaultBlockState();
-        BlockState purpleGlass = Blocks.MAGENTA_STAINED_GLASS.defaultBlockState();
+        BlockState purpleGlass = Blocks.STAINED_GLASS.magenta().defaultBlockState();
 
         //Walls
         finder.fillWithOutline(0, 0, 0, 7, 4, 7, endstoneBricks, null, false);

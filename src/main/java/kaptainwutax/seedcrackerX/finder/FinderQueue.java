@@ -6,7 +6,7 @@ import kaptainwutax.seedcrackerX.render.Cuboid;
 import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.state.level.LevelRenderState;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -38,7 +38,7 @@ public class FinderQueue {
 
     public static void registerEvents() {
         LevelRenderEvents.END_EXTRACTION.register(levelExtractionContext -> FinderQueue.get().extractCuboids(levelExtractionContext.levelState(), levelExtractionContext.camera()));
-        LevelRenderEvents.END_MAIN.register(levelRenderContext -> FinderQueue.get().renderCuboids(levelRenderContext.bufferSource(), levelRenderContext.poseStack(), levelRenderContext.levelState()));
+        LevelRenderEvents.END_MAIN.register(levelRenderContext -> FinderQueue.get().renderCuboids(levelRenderContext.submitNodeCollector(), levelRenderContext.poseStack(), levelRenderContext.levelState()));
     }
 
     public static FinderQueue get() {
@@ -80,14 +80,12 @@ public class FinderQueue {
         state.setData(CUBOID_SET_KEY, cuboids);
     }
 
-    public void renderCuboids(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, LevelRenderState state) {
+    public void renderCuboids(SubmitNodeCollector submitter, PoseStack poseStack, LevelRenderState state) {
         Set<Cuboid> cuboids = state.getData(CUBOID_SET_KEY);
         if (cuboids == null) {
             return;
         }
-        cuboids.forEach(cuboid -> cuboid.render(poseStack, bufferSource));
-        // fabric did an upsie and now you need to call end batch after the event...
-        bufferSource.endBatch();
+        cuboids.forEach(cuboid -> cuboid.render(poseStack, submitter));
     }
 
     public List<Finder.Type> getActiveFinderTypes() {

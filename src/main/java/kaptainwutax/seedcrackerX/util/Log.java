@@ -63,7 +63,7 @@ public class Log {
     }
 
     private static void sendMessage(Component component) {
-        schedule(() -> Minecraft.getInstance().getChatListener().handleSystemMessage(component, false));
+        schedule(() -> Minecraft.getInstance().gui.chatListener().handleSystemMessage(component, false));
     }
 
 }

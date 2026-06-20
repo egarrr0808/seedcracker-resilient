@@ -2,14 +2,13 @@ package kaptainwutax.seedcrackerX.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.ShapeRenderer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.util.ARGB;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class Cuboid {
     private final AABB box;
@@ -42,8 +41,8 @@ public class Cuboid {
         return new Cuboid(this.box.move(camera.position().scale(-1)), this.argb);
     }
 
-    public void render(PoseStack poseStack, MultiBufferSource bufferSource) {
-        float alpha = ARGB.alphaFloat(this.argb);
-        ShapeRenderer.renderShape(poseStack, bufferSource.getBuffer(NoDepthLayer.LINES_NO_DEPTH_LAYER), Shapes.box(this.box.minX, this.box.minY, this.box.minZ, this.box.maxX, this.box.maxY, this.box.maxZ), 0, 0, 0, ARGB.opaque(this.argb), alpha);
+    public void render(PoseStack poseStack, SubmitNodeCollector submitter) {
+        VoxelShape shape = Shapes.box(this.box.minX, this.box.minY, this.box.minZ, this.box.maxX, this.box.maxY, this.box.maxZ);
+        submitter.submitShapeOutline(poseStack, shape, NoDepthLayer.LINES_NO_DEPTH_LAYER, this.argb, 2, true);
     }
 }

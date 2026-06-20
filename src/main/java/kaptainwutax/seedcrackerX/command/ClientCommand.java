@@ -15,7 +15,7 @@ public abstract class ClientCommand {
 
     public static void sendFeedback(String message, ChatFormatting color) {
         try {
-            Minecraft.getInstance().getChatListener().handleSystemMessage(Component.literal(message).withStyle(color), false);
+            Minecraft.getInstance().gui.chatListener().handleSystemMessage(Component.literal(message).withStyle(color), false);
         } catch (Exception e) {
         }
     }
