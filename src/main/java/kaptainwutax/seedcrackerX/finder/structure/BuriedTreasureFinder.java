@@ -73,7 +73,7 @@ public class BuriedTreasureFinder extends BlockFinder {
 
         result.removeIf(pos -> {
             BlockState chest = world.getBlockState(pos);
-            if (chest.hasProperty(ChestBlock.WATERLOGGED)) return true;
+            if (chest.getValue(ChestBlock.WATERLOGGED)) return true;
 
             BlockState chestHolder = world.getBlockState(pos.below());
             return !CHEST_HOLDERS.contains(chestHolder);
