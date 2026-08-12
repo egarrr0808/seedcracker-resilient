@@ -8,6 +8,17 @@ or respawn.
 
 Use it only on worlds you own or servers where you have permission to test.
 
+## Download
+
+[Download the latest Minecraft 26.2 release](https://github.com/egarrr0808/seedcracker-resilient/releases/latest).
+
+Version numbers describe different things:
+
+- **Minecraft 26.2** is the supported game version.
+- **SeedCracker Resilient 0.2.0** is this fork's release version.
+- **SeedCrackerX 2.16.1** identifies the upstream codebase used for the first
+  release; it is not the supported Minecraft version.
+
 ## What resilient mode changes
 
 Resilient mode is enabled by default. It:
