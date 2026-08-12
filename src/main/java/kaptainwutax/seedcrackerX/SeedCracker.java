@@ -36,7 +36,9 @@ public class SeedCracker implements ModInitializer {
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> ClientCommands.registerCommands(dispatcher));
 
-        Database.fetchSeeds();
+        if (!Config.get().resilientMode) {
+            Database.fetchSeeds();
+        }
     }
 
     public DataStorage getDataStorage() {

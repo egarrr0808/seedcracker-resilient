@@ -61,6 +61,16 @@ public abstract class ClientPacketListenerMixin {
         DimensionType dimension = Minecraft.getInstance().level.dimensionType();
         ReloadFinders.reloadHeight(dimension.minY(), dimension.minY() + dimension.logicalHeight());
 
+        if (Config.get().resilientMode) {
+            var storage = SeedCracker.get().getDataStorage();
+            boolean firstObservation = storage.observeHashedSeed(hashedSeedData.getHashedSeed());
+            storage.clearHashedSeedData();
+            if (firstObservation && Config.get().debug) {
+                Log.warn("Resilient mode ignored server hash [" + hashedSeedData.getHashedSeed() + "]");
+            }
+            return;
+        }
+
         if (SeedCracker.get().getDataStorage().addHashedSeedData(hashedSeedData, DataAddedEvent.POKE_BIOMES) && Config.get().active && dimensionChange) {
             Log.error(Log.translate("fetchedHashedSeed"));
             if (Config.get().debug) {
@@ -71,6 +81,9 @@ public abstract class ClientPacketListenerMixin {
 
     @Unique
     private void tryDatabase() {
+        if (Config.get().resilientMode || SeedCracker.get().getDataStorage().hashedSeedData == null) {
+            return;
+        }
         Long seed = Database.getSeed(this.getConnection().getRemoteAddress().toString(), SeedCracker.get().getDataStorage().hashedSeedData.getHashedSeed());
         if (seed == null) {
             return;

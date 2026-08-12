@@ -8,6 +8,7 @@ import kaptainwutax.seedcrackerX.command.DatabaseCommand;
 import kaptainwutax.seedcrackerX.command.FinderCommand;
 import kaptainwutax.seedcrackerX.command.GuiCommand;
 import kaptainwutax.seedcrackerX.command.RenderCommand;
+import kaptainwutax.seedcrackerX.command.ResilientCommand;
 import kaptainwutax.seedcrackerX.command.VersionCommand;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
@@ -26,6 +27,7 @@ public class ClientCommands {
     public static VersionCommand VERSION;
     public static GuiCommand GUI;
     public static DatabaseCommand DATABASE;
+    public static ResilientCommand RESILIENT;
 
     static {
         COMMANDS.add(RENDER = new RenderCommand());
@@ -35,6 +37,7 @@ public class ClientCommands {
         COMMANDS.add(VERSION = new VersionCommand());
         COMMANDS.add(GUI = new GuiCommand());
         COMMANDS.add(DATABASE = new DatabaseCommand());
+        COMMANDS.add(RESILIENT = new ResilientCommand());
     }
 
     public static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher) {

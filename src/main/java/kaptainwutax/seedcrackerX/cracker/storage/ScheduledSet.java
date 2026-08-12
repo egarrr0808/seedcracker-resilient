@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ScheduledSet<T> implements Iterable<T> {
 
@@ -38,6 +40,20 @@ public class ScheduledSet<T> implements Iterable<T> {
 
     public Set<T> getBaseSet() {
         return this.baseSet;
+    }
+
+    public synchronized List<T> snapshot() {
+        List<T> result = new ArrayList<>(this.baseSet);
+        for (T value : this.scheduledSet) {
+            if (!result.contains(value)) {
+                result.add(value);
+            }
+        }
+        return result;
+    }
+
+    public synchronized List<T> committedSnapshot() {
+        return new ArrayList<>(this.baseSet);
     }
 
     @Override

@@ -158,5 +158,9 @@ public abstract class Finder {
         public static List<Type> getForCategory(Category category) {
             return Arrays.stream(values()).filter(type -> type.category == category).collect(Collectors.toList());
         }
+
+        public boolean isUnsafeForResilientMode() {
+            return this == END_CITY || this == END_PILLARS || this == END_GATEWAY || this == BIOME;
+        }
     }
 }

@@ -91,6 +91,7 @@ public class FinderQueue {
     public List<Finder.Type> getActiveFinderTypes() {
         return Arrays.stream(Finder.Type.values())
                 .filter(type -> type.enabled.get())
+                .filter(type -> !Config.get().resilientMode || !type.isUnsafeForResilientMode())
                 .collect(Collectors.toList());
     }
 

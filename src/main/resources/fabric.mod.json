@@ -1,16 +1,18 @@
 {
   "schemaVersion": 1,
-  "id": "seedcrackerx",
+  "id": "seedcracker_resilient",
   "version": "${version}",
-  "name": "SeedCrackerX",
-  "description": "Used for finding the seed of multiplayer or singleplayer worlds.",
+  "name": "SeedCracker Resilient",
+  "description": "Permission-based seed recovery that does not trust server-supplied seed metadata.",
   "authors": [
     "KaptainWutax",
-    "19MisterX98"
+    "19MisterX98",
+    "SeedCracker Resilient contributors"
   ],
   "contact": {
-    "issues": "https://github.com/19MisterX98/SeedcrackerX/issues",
-    "sources": "https://github.com/19MisterX98/seedcrackerX/"
+    "homepage": "https://github.com/egarrr0808/seedcracker-resilient",
+    "sources": "https://github.com/egarrr0808/seedcracker-resilient",
+    "issues": "https://github.com/egarrr0808/seedcracker-resilient/issues"
   },
   "license": "MIT",
   "icon": "assets/seedcrackerx/icon.png",
@@ -36,6 +38,9 @@
     "fabric-resource-loader-v0": "*",
     "fabric-resource-loader-v1": "*",
     "cloth-config": "*"
+  },
+  "breaks": {
+    "seedcrackerx": "*"
   },
   "suggests": {
     "flamingo": "*",

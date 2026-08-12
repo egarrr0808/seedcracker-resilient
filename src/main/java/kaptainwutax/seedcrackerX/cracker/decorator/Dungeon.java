@@ -152,6 +152,10 @@ public class Dungeon extends Decorator<Decorator.Config, Dungeon.Data> {
             return this.bitsCount >= MIN_FLOOR_BITS && this.bitsCount <= MAX_FLOOR_BITS;
         }
 
+        public int getBlockY() {
+            return this.blockY;
+        }
+
         public void onDataAdded(DataStorage dataStorage) {
             dataStorage.getTimeMachine().poke(TimeMachine.Phase.STRUCTURES);
             if (dataStorage.getTimeMachine().shouldTerminate) return;

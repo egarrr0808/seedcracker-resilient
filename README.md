@@ -1,242 +1,93 @@
-# SeedCrackerX [![Github All Releases](https://img.shields.io/github/downloads/19MisterX98/SeedCrackerX/total.svg)]
+# SeedCracker Resilient
 
-## Readme Language
+SeedCracker Resilient is an experimental Fabric client mod for Minecraft 26.2.
+It is a replacement fork of
+[SeedCrackerX](https://github.com/19MisterX98/SeedcrackerX) that can recover a
+world seed without trusting the seed-like value sent by a server during login
+or respawn.
 
-[中文](readmes/READMEzh.md)
-[Русский](readmes/READMEru.md)
-[Українська](readmes/READMEuk.md)
-[Türkçe](readmes/READMEtr.md)
+Use it only on worlds you own or servers where you have permission to test.
 
-## I'm active on:
+## What resilient mode changes
 
-- [My Discord](https://discord.gg/JRmHzqQYfp)
-- [Youtube](https://www.youtube.com/channel/UCby9ZxEjJCqmccQGF3GSYlA)
+Resilient mode is enabled by default. It:
 
-# Version Tab
+- records, then ignores, the server-supplied hashed seed;
+- excludes End cities, End pillars, End gateways, and client-derived biome data;
+- keeps Overworld structures and dungeons as independent observations;
+- disables seed-database lookup and submission;
+- resets collected evidence whenever the mode changes;
+- validates candidates against evidence already committed to the search; and
+- atomically exports debounced JSON evidence snapshots.
 
-| Minecraft Version | SeedCrackerX version                                                                                       | Dependencies                                                                                                                                                                                   |
-|-------------------|------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 26.2              | [2.16.1](https://github.com/19MisterX98/SeedcrackerX/releases/download/prerelease/seedcrackerX-2.16.1.jar) | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 26.1-26.1.2       | [2.16.0](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.16.0/seedcrackerX-2.16.0.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.21.11           | [2.15.6](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.15.6/seedcrackerX-2.15.6.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.21.9-1.21.10    | [2.15.5](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.15.5/seedcrackerX-2.15.5.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.21.6-1.21.8     | [2.15.4](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.15.4/seedcrackerX-2.15.4.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.21.5            | [2.15.3](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.15.3/seedcrackerX-2.15.3.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.21.4            | [2.15.2](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.15.2/seedcrackerX-2.15.2.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.21.2-1.21.3     | [2.15.1](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.15.1/seedcrackerX-2.15.1.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.21-1.21.1       | [2.15.0](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.15.0/seedcrackerX-2.15.0.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.20.6            | [2.14.7](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.14.7/seedcrackerX-2.14.7.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.20.4            | [2.14.6](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.14.6/seedcrackerX-2.14.6.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.20.2            | [2.14.5](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.14.5/seedcrackerX-2.14.5.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.20-1.20.1       | [2.14.4](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.14.4/seedcrackerX-2.14.4.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.19.4            | [2.14.2](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.14.2/seedcrackerX-2.14.2.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.19.3            | [2.13.1](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.13.1/seedcrackerX-2.13.1.jar)     | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.19-1.19.2       | [2.13](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.13/seedcrackerX-2.13.jar)           | [Fabric mod loader 0.14.0+](https://fabricmc.net/use/)                                                                                                                                         |
-| 1.18.2            | [2.12](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.12/seedcrackerX-2.12.jar)           | [Fabric mod loader](https://fabricmc.net/use/)                                                                                                                                                 | 
-| 1.18-1.18.1       | [2.11.4](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.11.4/seedcrackerX-2.11.4.jar)     | [Fabric mod loader](https://fabricmc.net/use/)                                                                                                                                                 |
-| 1.17-1.17.1       | [2.10.1](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.10.1/seedcrackerX-2.10.1.jar)     | [Fabric mod loader](https://fabricmc.net/use/)                                                                                                                                                 |
-| 1.16.5            | [2.7](https://github.com/19MisterX98/SeedcrackerX/releases/download/2.7.1/seedcrackerX-0.2.7.jar)          | [Fabric mod loader](https://fabricmc.net/use/), [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api),  [Mod Menu](https://www.curseforge.com/minecraft/mc-mods/modmenu/files) |
+This policy is aimed at servers that alter the login seed field but still use
+vanilla-compatible world generation. It cannot recover a meaningful vanilla
+seed from arbitrary custom terrain, per-feature seeds, or modified structure
+placement.
 
-## Installation
+Read [How resilient seed recovery works](docs/how-resilient-seed-recovery-works.md)
+for the short explanation, detailed algorithm, trust model, and limitations.
 
-Download and install the [fabric mod loader](https://fabricmc.net/use/)
- 
-Download the latest [release or pre-release](https://github.com/19MisterX98/SeedCrackerX/releases) of SeedCrackerX
-  
-put the .jar file in your mod directory, either %appdata%/.minecraft/mods/ folder for the vanilla launcher or your own instance folder.
-  
-#### Optional
-  
-Download the latest release of [Multiconnect](https://github.com/Earthcomputer/multiconnect/releases) or [ViaFabric](https://modrinth.com/mod/viafabric) to connect to servers on lower MC versions
-  
-## Database
+## Install
 
-Since the mod is used by many people, I have decided to create a Google sheet for server seeds.
-If you enable the database option in the config gui the mod will send cracked seeds from 10+ player servers directly to the Google sheet.
-You also need a minecraft license
+1. Install Fabric Loader for Minecraft 26.2.
+2. Install Fabric API for Minecraft 26.2.
+3. Put the release jar in the instance's `mods` directory.
+4. Remove SeedCrackerX from that instance; this mod replaces it and declares an
+   incompatibility with the upstream mod ID.
 
-[The Sheet](https://docs.google.com/spreadsheets/d/1tuQiE-0leW88em9OHbZnH-RFNhVqgoHhIt9WQbeqqWw/edit?usp=sharing)
-
-# Usage
-
-## 1.17.X and below
-
-### Overworld
-
-Run around in the world until the mod finds a dungeon. After the mod found one the cracking process starts automatically.
-If it doesn't give you a world seed, you may need to find another dungeon.
-
-### The Nether
-
-Run around in the warped fungus biome until the mod finds big fungus and starts cracking.
-
-### The End
-
-You have to find 5 (or more) end cities or end gateways and then return to the center of the end dimension to obtain the pillar seed, after that cracking should begin.
-
-#### Video guides:
-- [Structures and Endpillars](https://youtu.be/aUuPSZVPH8E?t=462)
-- [warped fungus](https://youtu.be/HKjwgofhKs4)
-
-  ### Supported Decorators
-    - Dungeon
-    - End Gateway
-    - Desert Well
-    - Emerald Ore
-    - Warped Fungus
-
-## 1.18.X and higher
-
-Dungeon cracking, fungus cracking don't work anymore.
-
-### Overworld
-
-Go to the config menu via "/seedcracker gui" (1.19.3+) or "/seed gui" (before 1.19.3) and make sure that Emeralds, Gateways, Biomes, Desert wells and Warped fungi are disabled since they aren't updated and can give wrong data.
-
-For cracking, you now need to get 40 bits of liftable structures and 32 regular bits from the listed ones:
-
-  ### Supported Structures
-  
-    - Igloo - 9 regular and liftable bits
-    - Desert Pyramid - 9 regular and liftable bits
-    - Jungle Temple - 9 regular and liftable bits
-    - Swamp Hut - 9 regular and liftable bits
-    - Shipwreck - 8 regular and liftable bits
-    - Pillager Outpost - 9 liftable bits
-    - Ocean Monument - 9 regular bits
-
-Any combination is valid. For example: 3 shipwrecks, 1 pyramid and 1 igloo.
-You can track your process with "/seed data bits" (look at the bits count for liftable structures)
-A structure is found when there is an outline around it.
-After you get enough, the cracking process starts automatically. This process takes around 1-5 mins.
-The mod may ask you to find additional structures after this.
-It's more likely to happen with fewer bits and structures of the same type.
-After reducing your structure seeds, the mod will brute force your world seed via dungeon positions or hashed seed.
-
-### The Nether
-
-Fungus cracking don't work anymore, so there are no way to find nether seed using SeedcrackerX, however you can try to crack it yourself by using [Nether_Bedrock_Cracker](https://github.com/19MisterX98/Nether_Bedrock_Cracker)
-    
-### The End
-
-You have to find 5 (or more) end cities (fill up regular bits) and then return to the center of the end dimension to obtain the pillar seed, after that cracking should begin.
-
-- You need to disable end gateways!
+The jar requires Java 25 and Minecraft `>=26.2 <26.3`.
 
 ## Commands
 
-If version of your mod is older than 2.13.1, use prefix
- - `/seed` instead of `/seedcracker`
+```text
+/seedcracker resilient status
+/seedcracker resilient on
+/seedcracker resilient off
+/seedcracker resilient validate <world-seed>
+/seedcracker resilient export
+/seedcracker data bits
+/seedcracker data clear
+```
 
-  ### GUI Command
-  - `/seedcracker gui`
-  
-  Opens the config gui where you can modify settings like the server mc-version, all finders, database and rendermode.
-  There are command alternatives for most of this, but they shouldn't be used anymore.
-  
-  ### Finder Reload Command
-  - `/seedcracker finder reload`
+`status` reports structure, lifting, and decorator progress, plus the number of
+distinct server hashes ignored in the current collection run. Evidence is
+automatically exported after new observations to:
 
-  Rescans the loaded Chunks to find structures that weren't found before.
+```text
+config/seedcracker-resilient/evidence/<server>.json
+```
 
-  ### Data Command
-  - `/seedcracker data clear`
-  
-  Clears all the collected data without requiring a relog. This is useful for multi-world servers.
-  
-  - `/seedcracker data bits`
-  
-  Display how many bits of information have been collected.
-  Normal bits are used for end pillar + structure cracking. Cracking starts at 32 bits.
-  Lifting bits are used for liftable structure cracking. Cracking starts at 40 bits.
-  
-  - `/seed data restore`
-  
-  When you leave a world, the mod will save currently collected structure information in a file of the .minecraft/config directory.
-  After rejoining, you can restore it with this command.
-  
-  
-  ### Debug Command
-  - `/seedcracker cracker debug`
+The export contains the observed hash values, evidence coordinates, estimated
+progress, and current candidates. Treat it as sensitive: coordinates and a
+server address can identify a private world.
 
-  Additional info is shown
-  
-  ### Database Command
-  - `/seedcracker database`
-  
-  Opens a [google sheet](https://docs.google.com/spreadsheets/d/1tuQiE-0leW88em9OHbZnH-RFNhVqgoHhIt9WQbeqqWw/edit?usp=sharing) that is maintained by the mod
-  
-## Video Tutorials
+## Build and test
 
-Neil's:
-- [1.15](https://youtu.be/1ChmLi9og8Q)
-- [1.16](https://youtu.be/aUuPSZVPH8E)
+Minecraft 26.2 requires Java 25:
 
-Dyiing's
-- [1.18](https://www.youtube.com/watch?v=tKeEyx7jIE4)
+```bash
+export JAVA_HOME="$HOME/.minecraft/runtime/java-runtime-epsilon/linux/java-runtime-epsilon"
+./gradlew clean test build
+```
 
-Mine:
-- [Dungeon cracking & end pillar cracking](https://youtu.be/8ytfZ2MXosY)
-- [Nether cracking](https://youtu.be/HKjwgofhKs4)
-- [Structure cracking](https://youtu.be/UXVrBaOR8H0)
+The release jar is written to `build/libs/seedcracker-resilient-*.jar`.
 
+## Status and limitations
 
-## Setting up the Workspace
+This release has been tested against a controlled Paper 26.2 server whose
+plugin changed the client-visible seed field. The client ignored that field and
+recovered the server's real seed from structure and dungeon observations.
 
--Clone the repository.
+Candidate validation establishes consistency with the observations used by the
+search. It is not proof of uniqueness unless one candidate remains, and false
+or incomplete observations can still prevent a result. Evidence export is a
+diagnostic format, not a stable public API.
 
--Run `gradlew genSources <idea|eclipse>`.
+## License and credit
 
-## Building the Mod
+MIT licensed. Based on SeedCrackerX by KaptainWutax and 19MisterX98. The
+original copyright and license are preserved in [LICENSE](LICENSE).
 
--Update the version in `build.gradle` and `fabric.mod.json`.
-
--Run `gradlew build`.
-
-## API for other mods
-
-- Include seedcracker-api and jitpack in your build.gradle
-
-      repositories {
-          mavenCentral()
-          maven { url "https://jitpack.io" }
-      }
-      
-      dependencies {
-          implementation (include('com.github.19MisterX98.SeedcrackerX:seedcrackerx-api:master-SNAPSHOT')) {transitive = false}
-      }
-
-- Add a class that implements the api interface
-
-      package misterx.myMod.seedManagemnet.SeedCrackerEP
-      
-      import kaptainwutax.seedcrackerX.api.SeedCrackerAPI;
-    
-      public class SeedCrackerEP implements SeedCrackerAPI {
-          @Override
-          public void pushWorldSeed(long seed) {
-              //do something
-              Foo.bar(seed)
-          }
-      }
-
-- Tell fabric.mod.json where your entrypoint is
-
-      "entrypoints": {
-        "main": [...],
-        "client": [...],
-        "server": [...],
-        "seedcrackerx": [
-          "misterx.myMod.seedManagemnet.SeedCrackerEP"
-        ]
-      },
-
-## Contributors
-
-[KaptainWutax](https://github.com/KaptainWutax) - Author of the original mod
-
-[neil](https://www.youtube.com/watch?v=aUuPSZVPH8E) - Video Tutorials
-
-[Nekzuris](https://github.com/Nekzuris) and [ItzSkyReed](https://github.com/ItzSkyReed)  - README
-
-[19MisterX98](https://www.youtube.com/channel/UCby9ZxEjJCqmccQGF3GSYlA) - Author of SeedCrackerX
+This project is an independent fork and is not affiliated with Mojang Studios,
+Microsoft, Fabric, or the upstream SeedCrackerX maintainers.

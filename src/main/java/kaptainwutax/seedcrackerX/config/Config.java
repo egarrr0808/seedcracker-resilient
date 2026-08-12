@@ -18,7 +18,7 @@ import java.io.Reader;
 public class Config {
     private static final Logger logger = LoggerFactory.getLogger("config");
 
-    private static final File file = new File(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().toFile(), "seedcracker.json");
+    private static final File file = new File(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().toFile(), "seedcracker-resilient.json");
     private static Config INSTANCE = new Config();
     public FeatureToggle buriedTreasure = new FeatureToggle(true);
     public FeatureToggle desertTemple = new FeatureToggle(true);
@@ -41,11 +41,15 @@ public class Config {
     public boolean active = true;
     public boolean debug = false;
     public boolean antiXrayBypass = true;
+    public boolean resilientMode = true;
     private MCVersion version = MCVersion.latest();
     public boolean databaseSubmits = false;
     public boolean anonymusSubmits = false;
 
     public static void save() {
+        if (INSTANCE.resilientMode) {
+            INSTANCE.applyResilientDefaults();
+        }
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         // make sure that the config directory exists
         file.getParentFile().mkdirs();
@@ -60,10 +64,16 @@ public class Config {
     public static void load() {
         Gson gson = new Gson();
 
-        if (!file.exists()) return;
+        if (!file.exists()) {
+            INSTANCE.applyResilientDefaults();
+            return;
+        }
 
         try (Reader reader = new FileReader(file)) {
             INSTANCE = gson.fromJson(reader, Config.class);
+            if (INSTANCE.resilientMode) {
+                INSTANCE.applyResilientDefaults();
+            }
         } catch (Exception e) {
             logger.error("seedcracker couldn't load config, deleting it...", e);
             file.delete();
@@ -72,6 +82,15 @@ public class Config {
 
     public static Config get() {
         return INSTANCE;
+    }
+
+    public void applyResilientDefaults() {
+        databaseSubmits = false;
+        endCity.set(false);
+        endPillars.set(false);
+        endGateway.set(false);
+        biome.set(false);
+        dungeon.set(true);
     }
 
     public MCVersion getVersion() {

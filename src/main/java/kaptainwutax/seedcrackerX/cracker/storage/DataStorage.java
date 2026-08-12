@@ -22,6 +22,7 @@ import kaptainwutax.seedcrackerX.cracker.decorator.Dungeon;
 import kaptainwutax.seedcrackerX.cracker.decorator.EmeraldOre;
 import kaptainwutax.seedcrackerX.cracker.decorator.WarpedFungus;
 import kaptainwutax.seedcrackerX.finder.BlockUpdateQueue;
+import kaptainwutax.seedcrackerX.util.EvidenceExporter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 
@@ -29,6 +30,8 @@ import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DataStorage {
 
@@ -50,6 +53,8 @@ public class DataStorage {
     };
     public ScheduledSet<Entry<Feature.Data<?>>> baseSeedData = new ScheduledSet<>(SEED_DATA_COMPARATOR);
     public HashedSeedData hashedSeedData = null;
+    private Set<Long> observedHashedSeeds = ConcurrentHashMap.newKeySet();
+    private final AtomicBoolean evidenceDirty = new AtomicBoolean();
     public BlockUpdateQueue blockUpdateQueue = new BlockUpdateQueue();
     public boolean openGui = false;
     protected TimeMachine timeMachine = new TimeMachine(this);
@@ -86,6 +91,9 @@ public class DataStorage {
         if (!this.timeMachine.isRunning) {
             this.baseSeedData.dump();
             this.biomeSeedData.dump();
+            if (this.evidenceDirty.compareAndSet(true, false)) {
+                EvidenceExporter.schedule(this);
+            }
             blockUpdateQueue.tick();
 
             this.timeMachine.isRunning = true;
@@ -124,6 +132,7 @@ public class DataStorage {
         }
 
         this.baseSeedData.scheduleAdd(e);
+        this.evidenceDirty.set(true);
         this.schedule(event::onDataAdded);
         return true;
     }
@@ -136,6 +145,7 @@ public class DataStorage {
         }
 
         this.biomeSeedData.scheduleAdd(e);
+        this.evidenceDirty.set(true);
         this.schedule(event::onDataAdded);
         return true;
     }
@@ -148,6 +158,34 @@ public class DataStorage {
         }
 
         return false;
+    }
+
+    public boolean observeHashedSeed(long hashedSeed) {
+        boolean added = this.observedHashedSeeds.add(hashedSeed);
+        if (added) {
+            this.evidenceDirty.set(true);
+        }
+        return added;
+    }
+
+    public int getObservedHashedSeedCount() {
+        return this.observedHashedSeeds.size();
+    }
+
+    public void clearHashedSeedData() {
+        this.hashedSeedData = null;
+    }
+
+    public List<Entry<Feature.Data<?>>> getBaseSeedDataSnapshot() {
+        return this.baseSeedData.snapshot();
+    }
+
+    public List<Entry<Feature.Data<?>>> getCommittedBaseSeedDataSnapshot() {
+        return this.baseSeedData.committedSnapshot();
+    }
+
+    public Set<Long> getObservedHashedSeedsSnapshot() {
+        return Set.copyOf(this.observedHashedSeeds);
     }
 
     public void schedule(Consumer<DataStorage> consumer) {
@@ -206,10 +244,12 @@ public class DataStorage {
         this.pillarData = null;
         this.baseSeedData = new ScheduledSet<>(SEED_DATA_COMPARATOR);
         this.biomeSeedData = new ScheduledSet<>(null);
-        //this.hashedSeedData = null;
+        this.hashedSeedData = null;
+        this.observedHashedSeeds = ConcurrentHashMap.newKeySet();
         this.timeMachine.shouldTerminate = true;
         this.timeMachine = new TimeMachine(this);
         this.blockUpdateQueue = new BlockUpdateQueue();
+        this.evidenceDirty.set(true);
     }
 
     public static class Entry<T> {

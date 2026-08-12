@@ -17,6 +17,7 @@ import kaptainwutax.seedcrackerX.config.Config;
 import kaptainwutax.seedcrackerX.cracker.BiomeData;
 import kaptainwutax.seedcrackerX.cracker.decorator.Decorator;
 import kaptainwutax.seedcrackerX.util.Database;
+import kaptainwutax.seedcrackerX.util.CandidateValidator;
 import kaptainwutax.seedcrackerX.util.Log;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -42,11 +43,12 @@ public class TimeMachine {
     public static ExecutorService SERVICE = Executors.newFixedThreadPool(5);
 
     private final LCG inverseLCG = LCG.JAVA.combine(-2);
-    public boolean isRunning = false;
+    public volatile boolean isRunning = false;
     public boolean shouldTerminate = false;
     public List<Integer> pillarSeeds = null;
     public Set<Long> structureSeeds = new HashSet<>();
     public Set<Long> worldSeeds = new HashSet<>();
+    private Long lastValidatedSeed;
     protected DataStorage dataStorage;
 
     public TimeMachine(DataStorage dataStorage) {
@@ -54,6 +56,9 @@ public class TimeMachine {
     }
 
     public void poke(Phase phase) {
+        if (Config.get().resilientMode && !this.worldSeeds.isEmpty()) {
+            validateCandidates();
+        }
         if (this.worldSeeds.size() == 1) return;
         this.isRunning = true;
 
@@ -77,11 +82,14 @@ public class TimeMachine {
 
             phase = phase.nextPhase();
         }
+        if (Config.get().resilientMode && !this.worldSeeds.isEmpty()) {
+            validateCandidates();
+        }
         if (this.worldSeeds.size() == 1 && !this.shouldTerminate) {
             long seed = worldSeeds.stream().findFirst().get();
             SeedCracker.entrypoints.forEach(entrypoint -> entrypoint.pushWorldSeed(seed));
             Minecraft client = Minecraft.getInstance();
-            if (Config.get().databaseSubmits && client.getConnection().getOnlinePlayers().size() > 10 &&
+            if (!Config.get().resilientMode && Config.get().databaseSubmits && client.getConnection().getOnlinePlayers().size() > 10 &&
                     !client.getConnection().getConnection().isMemoryConnection()) {
                 Component text = Database.joinFakeServerForAuth();
                 if (text == null) {
@@ -89,6 +97,22 @@ public class TimeMachine {
                 } else {
                     Log.error(text.getString());
                 }
+            }
+        }
+    }
+
+    private void validateCandidates() {
+        int removed = CandidateValidator.removeInvalid(this.dataStorage, this.worldSeeds);
+        if (removed > 0) {
+            Log.warn("Resilient validation rejected " + removed + " world-seed candidate(s).");
+        }
+        if (this.worldSeeds.size() == 1) {
+            long seed = this.worldSeeds.iterator().next();
+            if (this.lastValidatedSeed == null || this.lastValidatedSeed != seed) {
+                CandidateValidator.Result result = CandidateValidator.validate(this.dataStorage, seed);
+                Log.warn("Validated candidate " + seed + " against " + result.tested() + " evidence item(s). "
+                        + result.inconclusive() + " inconclusive.");
+                this.lastValidatedSeed = seed;
             }
         }
     }
