@@ -79,6 +79,29 @@ and Minecraft version. The bundled seedfinding libraries reproduce those
 rules. For every candidate, the mod asks whether the simulated feature would
 start in the observed chunk.
 
+Anti-datapack mode replaces spacing, separation, and supported frequency values
+in that local model while keeping salts unchanged. A profile change clears
+candidates and modeled evidence, then rebuilds raw structure-start observations
+under the new model. Decorator evidence is not reconstructible from grid starts
+and must be recollected.
+
+The coordinate analyzer does not use pairwise-distance GCD. Random-spread grids
+are anchored at chunk-coordinate zero, including across negative coordinates.
+For every candidate spacing it uses floor division to assign observed start
+chunks to regions, rejects candidates placing two starts in one region, and
+computes each start's within-region offset. Largest observed offset bounds
+separation:
+
+```text
+0 <= separation <= spacing - largestObservedOffset - 1
+```
+
+This is a compatibility bound, not an exact estimate. Positive observations do
+not prove unused offsets impossible, biome filtering hides some candidate
+starts, and frequency/salt cannot be derived by this test. Exact inference
+needs stronger evidence, such as known absent candidates or joint seed-model
+testing.
+
 For “liftable” structures, partial placement information is used to reject
 large groups of lower-48-bit candidates early. The implementation first checks
 small lower-bit ranges, extends surviving prefixes, and then applies all
@@ -170,6 +193,8 @@ handled.
 - Too little or correlated evidence leaves multiple candidates.
 - Version mismatches change salts and generation rules. This release targets
   Minecraft 26.2 only.
+- The UltimateAntiSeedCracker profile comes from its public 1.0.0 pack for
+  Minecraft 1.20.1–1.20.4. Unsupported structure types are not silently used.
 - Servers can limit what chunks a player legitimately receives. This mod does
   not grant access to unloaded or unauthorized server data.
 - Exported evidence includes coordinates and a server identifier. Review it

@@ -14,11 +14,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class Config {
     private static final Logger logger = LoggerFactory.getLogger("config");
 
-    private static final File file = new File(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().toFile(), "seedcracker-resilient.json");
     private static Config INSTANCE = new Config();
     public FeatureToggle buriedTreasure = new FeatureToggle(true);
     public FeatureToggle desertTemple = new FeatureToggle(true);
@@ -42,11 +43,17 @@ public class Config {
     public boolean debug = false;
     public boolean antiXrayBypass = true;
     public boolean resilientMode = true;
+    public AntiDataPackConfig antiDataPack = new AntiDataPackConfig();
+    public Long knownWorldSeed;
+    public Map<String, ServerProfile> serverProfiles = new LinkedHashMap<>();
+    private transient String activeServerKey;
+    private transient ServerProfile activeServerProfile;
     private MCVersion version = MCVersion.latest();
     public boolean databaseSubmits = false;
     public boolean anonymusSubmits = false;
 
     public static void save() {
+        File file = configFile();
         if (INSTANCE.resilientMode) {
             INSTANCE.applyResilientDefaults();
         }
@@ -62,6 +69,7 @@ public class Config {
     }
 
     public static void load() {
+        File file = configFile();
         Gson gson = new Gson();
 
         if (!file.exists()) {
@@ -84,6 +92,11 @@ public class Config {
         return INSTANCE;
     }
 
+    private static File configFile() {
+        return new File(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().toFile(),
+                "seedcracker-resilient.json");
+    }
+
     public void applyResilientDefaults() {
         databaseSubmits = false;
         endCity.set(false);
@@ -101,6 +114,64 @@ public class Config {
         if (this.version == version) return;
         this.version = version;
         Features.init(version);
+    }
+
+    public AntiDataPackConfig getAntiDataPack() {
+        if (activeServerProfile != null) return activeServerProfile.antiDataPack();
+        if (antiDataPack == null) antiDataPack = new AntiDataPackConfig();
+        return antiDataPack;
+    }
+
+    public Long getKnownWorldSeed() {
+        return activeServerProfile == null ? knownWorldSeed : activeServerProfile.knownWorldSeed;
+    }
+
+    public void setKnownWorldSeed(Long seed) {
+        knownWorldSeed = seed;
+        if (activeServerProfile != null) activeServerProfile.knownWorldSeed = seed;
+    }
+
+    /** Selects persistent state for one server. Legacy global state migrates once. */
+    public boolean activateServerProfile(String serverKey) {
+        if (serverKey == null || serverKey.isBlank()) serverKey = "unknown";
+        if (serverKey.equals(activeServerKey) && activeServerProfile != null) return false;
+        if (serverProfiles == null) serverProfiles = new LinkedHashMap<>();
+        boolean created = !serverProfiles.containsKey(serverKey);
+        if (created) {
+            ServerProfile profile = serverProfiles.isEmpty()
+                    ? new ServerProfile(antiDataPack, knownWorldSeed)
+                    : new ServerProfile();
+            serverProfiles.put(serverKey, profile);
+        }
+        activeServerKey = serverKey;
+        activeServerProfile = serverProfiles.get(serverKey);
+        if (activeServerProfile.antiDataPack == null) activeServerProfile.antiDataPack = new AntiDataPackConfig();
+        antiDataPack = activeServerProfile.antiDataPack;
+        knownWorldSeed = activeServerProfile.knownWorldSeed;
+        return created;
+    }
+
+    public String getActiveServerKey() {
+        return activeServerKey == null ? "global" : activeServerKey;
+    }
+
+    public static class ServerProfile {
+        public AntiDataPackConfig antiDataPack;
+        public Long knownWorldSeed;
+
+        public ServerProfile() {
+            this(new AntiDataPackConfig(), null);
+        }
+
+        public ServerProfile(AntiDataPackConfig antiDataPack, Long knownWorldSeed) {
+            this.antiDataPack = antiDataPack == null ? new AntiDataPackConfig() : antiDataPack;
+            this.knownWorldSeed = knownWorldSeed;
+        }
+
+        private AntiDataPackConfig antiDataPack() {
+            if (antiDataPack == null) antiDataPack = new AntiDataPackConfig();
+            return antiDataPack;
+        }
     }
 
     public enum RenderType {

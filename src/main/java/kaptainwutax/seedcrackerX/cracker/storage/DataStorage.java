@@ -11,11 +11,14 @@ import com.seedfinding.mcfeature.structure.Shipwreck;
 import com.seedfinding.mcfeature.structure.Structure;
 import com.seedfinding.mcfeature.structure.TriangularStructure;
 import com.seedfinding.mcfeature.structure.UniformStructure;
+import com.seedfinding.mcfeature.structure.RegionStructure;
 import kaptainwutax.seedcrackerX.config.ConfigScreen;
+import kaptainwutax.seedcrackerX.Features;
 import kaptainwutax.seedcrackerX.cracker.BiomeData;
 import kaptainwutax.seedcrackerX.cracker.DataAddedEvent;
 import kaptainwutax.seedcrackerX.cracker.HashedSeedData;
 import kaptainwutax.seedcrackerX.cracker.PillarData;
+import kaptainwutax.seedcrackerX.cracker.VillageProximityData;
 import kaptainwutax.seedcrackerX.cracker.decorator.Decorator;
 import kaptainwutax.seedcrackerX.cracker.decorator.DeepDungeon;
 import kaptainwutax.seedcrackerX.cracker.decorator.Dungeon;
@@ -23,6 +26,7 @@ import kaptainwutax.seedcrackerX.cracker.decorator.EmeraldOre;
 import kaptainwutax.seedcrackerX.cracker.decorator.WarpedFungus;
 import kaptainwutax.seedcrackerX.finder.BlockUpdateQueue;
 import kaptainwutax.seedcrackerX.util.EvidenceExporter;
+import kaptainwutax.seedcrackerX.util.PlacementObservations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 
@@ -48,8 +52,13 @@ public class DataStorage {
             return 0;
         }
 
-        double diff = getBits(s2.data.feature, false) - getBits(s1.data.feature, false);
-        return diff == 0 ? 1 : (int) Math.signum(diff);
+        int result = Double.compare(getBits(s2.data.feature, false), getBits(s1.data.feature, false));
+        if (result != 0) return result;
+        result = Integer.compare(System.identityHashCode(s1.data.feature), System.identityHashCode(s2.data.feature));
+        if (result != 0) return result;
+        result = Integer.compare(s1.data.chunkX, s2.data.chunkX);
+        if (result != 0) return result;
+        return Integer.compare(s1.data.chunkZ, s2.data.chunkZ);
     };
     public ScheduledSet<Entry<Feature.Data<?>>> baseSeedData = new ScheduledSet<>(SEED_DATA_COMPARATOR);
     public HashedSeedData hashedSeedData = null;
@@ -125,6 +134,11 @@ public class DataStorage {
     }
 
     public synchronized boolean addBaseData(Feature.Data<?> data, DataAddedEvent event) {
+        if (data.feature instanceof RegionStructure<?, ?> && !(data instanceof VillageProximityData)) {
+            PlacementObservations.add(data);
+            this.evidenceDirty.set(true);
+        }
+        if (!Features.isPlacementEvidenceSupported(data.feature.getName())) return false;
         Entry<Feature.Data<?>> e = new Entry<>(data, event);
 
         if (this.baseSeedData.contains(e)) {
@@ -201,7 +215,8 @@ public class DataStorage {
 
         for (Entry<Feature.Data<?>> e : this.baseSeedData) {
             if (!(e.data.feature instanceof PillagerOutpost)) {
-                bits += getBits(e.data.feature, false);
+                bits += e.data instanceof VillageProximityData proximity
+                        ? proximity.estimatedBits() : getBits(e.data.feature, false);
             }
         }
         return bits;
@@ -211,10 +226,25 @@ public class DataStorage {
         double bits = 0.0D;
 
         for (Entry<Feature.Data<?>> e : this.baseSeedData) {
-            if (e.data.feature instanceof OldStructure structure) {
+            if (e.data instanceof VillageProximityData) {
+                continue;
+            } else if (e.data.feature instanceof OldStructure structure) {
                 bits += Math.log(structure.getOffset() * structure.getOffset()) / Math.log(2);
             } else if (e.data.feature instanceof Shipwreck shipwreck) {
                 bits += Math.log(shipwreck.getOffset() * shipwreck.getOffset()) / Math.log(2);
+            }
+        }
+        return bits;
+    }
+
+    public int getLiftingResidueBits() {
+        int bits = 0;
+        for (Entry<Feature.Data<?>> e : this.baseSeedData) {
+            if (e.data instanceof VillageProximityData) continue;
+            if (e.data.feature instanceof OldStructure<?> structure) {
+                bits += 2 * Integer.numberOfTrailingZeros(TimeMachine.liftingModulus(structure.getOffset()));
+            } else if (e.data.feature instanceof Shipwreck shipwreck) {
+                bits += 2 * Integer.numberOfTrailingZeros(TimeMachine.liftingModulus(shipwreck.getOffset()));
             }
         }
         return bits;

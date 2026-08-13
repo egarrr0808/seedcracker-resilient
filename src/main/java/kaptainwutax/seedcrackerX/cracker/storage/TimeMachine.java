@@ -15,8 +15,10 @@ import com.seedfinding.mcseed.lcg.LCG;
 import kaptainwutax.seedcrackerX.SeedCracker;
 import kaptainwutax.seedcrackerX.config.Config;
 import kaptainwutax.seedcrackerX.cracker.BiomeData;
+import kaptainwutax.seedcrackerX.cracker.VillageProximityData;
 import kaptainwutax.seedcrackerX.cracker.decorator.Decorator;
 import kaptainwutax.seedcrackerX.util.Database;
+import kaptainwutax.seedcrackerX.util.AntiDataPackFallback;
 import kaptainwutax.seedcrackerX.util.CandidateValidator;
 import kaptainwutax.seedcrackerX.util.Log;
 import net.minecraft.client.Minecraft;
@@ -40,7 +42,12 @@ import java.util.stream.Stream;
 public class TimeMachine {
     private static final Logger logger = LoggerFactory.getLogger("timeMachine");
 
-    public static ExecutorService SERVICE = Executors.newFixedThreadPool(5);
+    private static final AtomicInteger WORKER_ID = new AtomicInteger();
+    public static ExecutorService SERVICE = Executors.newFixedThreadPool(5, runnable -> {
+        Thread thread = new Thread(runnable, "seedcracker-cracker-" + WORKER_ID.incrementAndGet());
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private final LCG inverseLCG = LCG.JAVA.combine(-2);
     public volatile boolean isRunning = false;
@@ -87,6 +94,8 @@ public class TimeMachine {
         }
         if (this.worldSeeds.size() == 1 && !this.shouldTerminate) {
             long seed = worldSeeds.stream().findFirst().get();
+            Config.get().setKnownWorldSeed(seed);
+            Config.save();
             SeedCracker.entrypoints.forEach(entrypoint -> entrypoint.pushWorldSeed(seed));
             Minecraft client = Minecraft.getInstance();
             if (!Config.get().resilientMode && Config.get().databaseSubmits && client.getConnection().getOnlinePlayers().size() > 10 &&
@@ -141,11 +150,13 @@ public class TimeMachine {
     }
 
     protected boolean pokeLifting() {
-        if (!this.structureSeeds.isEmpty() || this.dataStorage.getLiftingBits() < 40F) return false;
+        if (!this.structureSeeds.isEmpty() || this.dataStorage.getLiftingBits() < 40F
+                || this.dataStorage.getLiftingResidueBits() < 20) return false;
         List<UniformStructure.Data<?>> dataList = new ArrayList<>();
 
         for (DataStorage.Entry<Feature.Data<?>> e : this.dataStorage.baseSeedData) {
-            if (e.data.feature instanceof OldStructure || e.data.feature instanceof Shipwreck) {
+            if (!(e.data instanceof VillageProximityData)
+                    && (e.data.feature instanceof OldStructure || e.data.feature instanceof Shipwreck)) {
                 dataList.add((UniformStructure.Data<?>) e.data);
             }
         }
@@ -160,15 +171,13 @@ public class TimeMachine {
         }
         Log.warn("tmachine.startLifting", dataList.size());
 
-        // You could first lift on 1L<<18 with %2 since that would be a smaller range
-        // Then lift on 1<<19 with those 1<<18 fixed with % 4 and for nextInt(24)
-        // You can even do %8 on 1<<20 (however we included shipwreck so only nextInt(20) so 1<<19 is the max here
+        // Two-adic residues survive truncating the structure seed. Custom datapacks may
+        // change an offset divisible by four (vanilla shipwreck: 20) to one divisible
+        // only by two (UltimateAntiSeedCracker: 18), so select the modulus per feature.
         Stream<Long> lowerBitsStream = LongStream.range(0, 1L << 19).boxed().filter(lowerBits -> {
             ChunkRand rand = new ChunkRand();
             for (UniformStructure.Data<?> data : dataList) {
-                rand.setRegionSeed(lowerBits, data.regionX, data.regionZ, data.feature.getSalt(), Config.get().getVersion());
-                if (rand.nextInt(((UniformStructure<?>)data.feature).getOffset()) % 4 != data.offsetX % 4 ||
-                        rand.nextInt(((UniformStructure<?>)data.feature).getOffset()) % 4 != data.offsetZ % 4) {
+                if (!matchesLiftingResidue(data, lowerBits, rand)) {
                     return false;
                 }
             }
@@ -197,9 +206,23 @@ public class TimeMachine {
             Log.warn("tmachine.structureSeedSearchFinished");
         } else {
             Log.error("finishedSearchNoResult");
+            AntiDataPackFallback.searchFailed(this);
         }
 
         return !this.structureSeeds.isEmpty();
+    }
+
+    static boolean matchesLiftingResidue(UniformStructure.Data<?> data, long lowerBits, ChunkRand rand) {
+        rand.setRegionSeed(lowerBits, data.regionX, data.regionZ, data.feature.getSalt(), data.feature.getVersion());
+        int offset = ((UniformStructure<?>) data.feature).getOffset();
+        int modulus = liftingModulus(offset);
+        if (modulus == 1) return false;
+        return Math.floorMod(rand.nextInt(offset), modulus) == Math.floorMod(data.offsetX, modulus)
+                && Math.floorMod(rand.nextInt(offset), modulus) == Math.floorMod(data.offsetZ, modulus);
+    }
+
+    static int liftingModulus(int offset) {
+        return offset % 4 == 0 ? 4 : offset % 2 == 0 ? 2 : 1;
     }
 
 
@@ -279,6 +302,7 @@ public class TimeMachine {
             Log.warn("tmachine.structureSeedSearchFinished");
         } else {
             Log.error("finishedSearchNoResult");
+            AntiDataPackFallback.searchFailed(this);
         }
 
         return true;

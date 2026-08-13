@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.seedfinding.mcfeature.Feature;
 import kaptainwutax.seedcrackerX.config.Config;
 import kaptainwutax.seedcrackerX.cracker.decorator.Decorator;
+import kaptainwutax.seedcrackerX.cracker.VillageProximityData;
 import kaptainwutax.seedcrackerX.cracker.decorator.Dungeon;
 import kaptainwutax.seedcrackerX.cracker.storage.DataStorage;
 import kaptainwutax.seedcrackerX.cracker.storage.TimeMachine;
@@ -107,15 +108,20 @@ public final class EvidenceExporter {
                 .thenComparingInt(item -> ((Number) item.get("chunkZ")).intValue()));
 
         Map<String, Object> root = new LinkedHashMap<>();
-        root.put("schemaVersion", 1);
+        root.put("schemaVersion", 2);
         root.put("generatedAt", Instant.now().toString());
         root.put("server", getWorldName());
         root.put("minecraftVersion", Config.get().getVersion().toString());
         root.put("resilientMode", Config.get().resilientMode);
+        root.put("antiDataPackMode", Config.get().getAntiDataPack().mode);
+        root.put("customPlacements", Config.get().getAntiDataPack().custom);
+        root.put("placementObservations", PlacementObservations.snapshot());
+        root.put("villageProximityObservations", VillageProximityObservations.snapshot());
         root.put("progress", Map.of(
                 "structureBits", storage.getBaseBits(),
                 "wantedStructureBits", storage.getWantedBits(),
                 "liftingBits", storage.getLiftingBits(),
+                "liftingResidueBits", storage.getLiftingResidueBits(),
                 "wantedLiftingBits", 40,
                 "decoratorBits", storage.getDecoratorBits(),
                 "wantedDecoratorBits", 32));
@@ -156,6 +162,11 @@ public final class EvidenceExporter {
             result.put("floorCalls", dungeon.floorCalls == null ? null : Arrays.toString(dungeon.floorCalls));
             result.put("heightBottom", dungeon.heightContext == null ? null : dungeon.heightContext.getBottomY());
             result.put("heightTop", dungeon.heightContext == null ? null : dungeon.heightContext.getTopY());
+        }
+        if (data instanceof VillageProximityData proximity) {
+            result.put("evidenceKind", "village_proximity");
+            result.put("radiusChunks", proximity.radius());
+            result.put("bits", proximity.estimatedBits());
         }
         return result;
     }

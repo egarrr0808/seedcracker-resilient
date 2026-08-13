@@ -88,6 +88,18 @@ public class ConfigScreen {
         settings.addEntry(eb.startBooleanToggle(Component.translatable("settings.antiXrayMode"), config.antiXrayBypass).setSaveConsumer(val -> config.antiXrayBypass = val).build());
         settings.addEntry(eb.startTextDescription(Component.translatable("settings.antiAntiXrayExplained")).build());
 
+        settings.addEntry(eb.startEnumSelector(Component.literal("Anti-datapack placement"),
+                        AntiDataPackConfig.Mode.class, config.getAntiDataPack().mode)
+                .setSaveConsumer(val -> {
+                    if (config.getAntiDataPack().mode != val) {
+                        config.getAntiDataPack().mode = val;
+                        kaptainwutax.seedcrackerX.Features.init(config.getVersion());
+                        SeedCracker.get().reset();
+                    }
+                })
+                .setTooltip(Component.literal("Changing placement model resets collected evidence."))
+                .build());
+
         //=============================INFO========================
         ConfigCategory info = builder.getOrCreateCategory(Component.translatable("info"));
         //Clear data

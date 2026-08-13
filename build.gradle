@@ -52,9 +52,13 @@ dependencies {
 
 	include implementation("com.seedfinding:latticg:${project.latticg_version}")
 
+	// Optional 26.2 biome/terrain validation. Runtime supplied as separate client mod.
+	compileOnly files("libs/seedmapper-2.29.1.jar")
+
 	testImplementation platform("org.junit:junit-bom:5.11.4")
 	testImplementation "org.junit.jupiter:junit-jupiter"
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+	testRuntimeOnly files("libs/seedmapper-2.29.1.jar")
 
 }
 

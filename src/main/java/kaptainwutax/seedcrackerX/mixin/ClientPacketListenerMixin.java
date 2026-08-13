@@ -9,6 +9,8 @@ import kaptainwutax.seedcrackerX.finder.FinderQueue;
 import kaptainwutax.seedcrackerX.finder.ReloadFinders;
 import kaptainwutax.seedcrackerX.util.Database;
 import kaptainwutax.seedcrackerX.util.Log;
+import kaptainwutax.seedcrackerX.util.PlacementObservations;
+import kaptainwutax.seedcrackerX.util.VillageProximityObservations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -42,6 +44,17 @@ public abstract class ClientPacketListenerMixin {
 
     @Inject(method = "handleLogin", at = @At(value = "TAIL"))
     public void onGameJoin(ClientboundLoginPacket packet, CallbackInfo ci) {
+        Config config = Config.get();
+        Minecraft client = Minecraft.getInstance();
+        String serverKey = client.getCurrentServer() == null
+                ? this.getConnection().getRemoteAddress().toString()
+                : client.getCurrentServer().ip;
+        config.activateServerProfile(serverKey);
+        Config.save();
+        kaptainwutax.seedcrackerX.Features.init(config.getVersion());
+        PlacementObservations.clear();
+        VillageProximityObservations.clear();
+        SeedCracker.get().reset();
         newDimension(new HashedSeedData(packet.commonPlayerSpawnInfo().seed()), false);
         tryDatabase();
         var preloaded = StructureSave.loadStructures();

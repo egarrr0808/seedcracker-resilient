@@ -20,13 +20,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class FinderQueue {
 
     private final static FinderQueue INSTANCE = new FinderQueue();
     private static final Logger log = LoggerFactory.getLogger(FinderQueue.class);
-    public static ExecutorService SERVICE = Executors.newFixedThreadPool(5);
+    private static final AtomicInteger WORKER_ID = new AtomicInteger();
+    public static ExecutorService SERVICE = Executors.newFixedThreadPool(5, runnable -> {
+        Thread thread = new Thread(runnable, "seedcracker-finder-" + WORKER_ID.incrementAndGet());
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private static final RenderStateDataKey<Set<Cuboid>> CUBOID_SET_KEY = RenderStateDataKey.create(() -> "SeedCrackerX cuboid set");
 
