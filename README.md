@@ -8,6 +8,52 @@ or respawn.
 
 Use it only on worlds you own or servers where you have permission to test.
 
+## Overview
+
+The project began as a small change to SeedCrackerX: record but do not trust the
+seed-like value supplied by a server. It now provides a broader set of tools
+for studying vanilla-compatible generation when a server changes that value or
+uses a datapack with different structure-placement settings.
+
+Current features include:
+
+- seed recovery from independently observed structures and dungeon/decorator
+  evidence;
+- custom structure spacing, separation, frequency, and salt settings;
+- separate seeds and placement profiles for each server address;
+- automatic retries using verified public anti-datapack profiles;
+- structure-position recording and spacing/separation analysis;
+- proximity-based village observations when the exact start chunk is unknown;
+- candidate validation and diagnostic evidence export;
+- client-side structure locating without access to the server's `/locate`
+  command;
+- locating all vanilla 26.2 biomes through SeedMapper; and
+- locating potential entity habitats, such as villages and swamp huts for cats.
+
+The mod performs calculations from data already visible to the client. It does
+not grant operator permissions, request unloaded chunks, or provide access to
+server files.
+
+## Development history
+
+The first version updated the upstream mod for Minecraft 26.2 and introduced
+resilient mode. Server-supplied seed hashes, seed-database integration, and
+generation evidence considered unsafe for this recovery model were excluded.
+Candidate validation and atomic evidence exports were added so failed searches
+could be inspected without mixing incompatible observations.
+
+Later work added explicit anti-datapack profiles. Placement settings can now be
+stored per server, observations can be rebuilt after a profile change, and
+known public profiles can be attempted in sequence. A placement analyzer was
+added for unknown static datapacks, together with village proximity evidence
+for cases where the true jigsaw start chunk is not visible to a normal player.
+
+The most recent changes added client-side structure locating, vanilla 26.2
+biome locating through SeedMapper, spawn-habitat locating, broader structure
+support, and automatic fallback from vanilla rules to verified public profiles.
+These additions remain local calculations; they do not invoke privileged server
+commands.
+
 ## Download
 
 [Download the latest Minecraft 26.2 release](https://github.com/egarrr0808/seedcracker-resilient/releases/latest).
@@ -105,6 +151,8 @@ block, light, population-cap, village-bed, and other spawning rules still apply.
 Custom datapack biomes and altered biome generation cannot be predicted by the
 vanilla 26.2 engine.
 
+## Automatic anti-datapack fallback
+
 `antidatapack auto` starts with vanilla placement. After a complete structure
 seed search returns zero candidates, it rebuilds the recorded structure starts
 under each verified public profile and retries. Current order is vanilla, then
@@ -143,6 +191,8 @@ Resilient mode still excludes End-city evidence. Pillager-outpost evidence
 is recorded for placement analysis but excluded from cracking when frequency
 is `0.22`; the current seedfinding library only models vanilla's legacy `0.2`
 check. Structures without an existing finder remain unsupported.
+
+## Observing custom placement
 
 Supported finders automatically log start chunks for placement analysis. Exact
 manual observations for supported structure IDs also become cracking evidence.
