@@ -211,6 +211,78 @@ separation: finite observations may never include the largest possible grid
 offset. It also cannot infer frequency or salt. Apply a chosen result with
 `set`; recorded structure starts are rebuilt automatically under `custom` mode.
 
+### Manual village workflow
+
+Use one of the following methods for each **different** village. Do not run both
+methods for the same sighting.
+
+If the exact village structure-start chunk is unknown, stand within the village
+and record a proximity observation:
+
+```text
+/seedcracker resilient antidatapack village-here
+```
+
+The default radius is 8 chunks. A smaller radius should be used only when there
+is reliable evidence that the real start is closer:
+
+```text
+/seedcracker resilient antidatapack village-here <radius-from-1-to-16>
+```
+
+Run this once per village, then travel to another village and repeat. The
+player's current chunk may be any chunk occupied by the village; it does not
+need to contain a bell or particular house. The command records a proximity
+constraint, not an exact start. More independent villages produce stronger
+evidence, but there is no fixed number that guarantees recovery.
+
+If the exact structure-start chunk is known from trustworthy server/debug data,
+record it directly:
+
+```text
+/seedcracker resilient antidatapack observe village <start-chunk-x> <start-chunk-z>
+```
+
+If the exact structure-start block is known instead, use:
+
+```text
+/seedcracker resilient antidatapack observe-block village <start-block-x> <start-block-z>
+```
+
+Do not substitute a random village chunk, player position, bell, house, or
+visual center for an exact start. Use `village-here` when the start is unknown.
+
+Recommended complete sequence:
+
+```text
+/seedcracker resilient on
+/seedcracker resilient antidatapack auto
+/seedcracker resilient antidatapack village-here
+/seedcracker resilient status
+```
+
+Repeat `village-here` at different villages and allow automatically detected
+structures/dungeons to add evidence. If all verified profiles are exhausted,
+`analyze` can inspect exact start observations collected automatically or with
+`observe`; proximity-only `village-here` observations cannot determine grid
+offsets:
+
+```text
+/seedcracker resilient antidatapack analyze village
+/seedcracker resilient antidatapack custom
+/seedcracker resilient antidatapack set village <spacing> <separation>
+/seedcracker resilient antidatapack set-frequency village <frequency>
+/seedcracker resilient antidatapack set-salt village <salt>
+/seedcracker resilient antidatapack status
+```
+
+Apply a custom placement only when the output and available evidence support
+it. Only set frequency or salt when their values are known; village placement
+does not normally need a frequency override. `analyze` can report compatible
+spacing/separation ranges, but positive sightings alone cannot discover a salt
+or prove one exact separation value. To discard collected cracking evidence
+and start again, use `/seedcracker data clear`.
+
 `status` reports structure, lifting, and decorator progress, plus the number of
 distinct server hashes ignored in the current collection run. Evidence is
 automatically exported after new observations to:
@@ -249,6 +321,40 @@ Candidate validation establishes consistency with the observations used by the
 search. It is not proof of uniqueness unless one candidate remains, and false
 or incomplete observations can still prevent a result. Evidence export is a
 diagnostic format, not a stable public API.
+
+### When seed recovery can fail
+
+- The server uses arbitrary custom terrain or a generator unrelated to vanilla.
+- Structures use unknown independent or randomized per-server salts.
+- A plugin moves, removes, or places structures after normal generation.
+- The selected Minecraft version or placement profile does not match the
+  server.
+- Too little independent evidence has been collected, or several seeds remain
+  consistent with it.
+- An exact observation contains the wrong start chunk. Village bells, houses,
+  player positions, and visual centers are not structure starts.
+- Evidence was mixed across worlds, dimensions, server resets, or incompatible
+  profiles.
+- Existing chunks were generated before a datapack/profile change and therefore
+  follow different rules from newer chunks.
+
+### When client-side locating can fail
+
+`/seedcracker locate` requires the correct world seed, Minecraft version,
+dimension, and generation profile. Its result can be empty or point to ordinary
+terrain when any of those inputs is wrong. It can also fail when:
+
+- a datapack changes unsupported placement, biome, exclusion-zone, or terrain
+  rules;
+- a server plugin disables, removes, relocates, or regenerates a structure;
+- the requested structure has no implemented local finder;
+- the search radius is too small; or
+- old and new chunks were generated with different settings.
+
+Biome locating models vanilla 26.2 generation only. Custom biomes and custom
+noise settings are unsupported. Spawn locating reports potential habitat, not
+an existing mob or guaranteed spawn: blocks, light, height, beds, mob caps,
+difficulty, nearby players, and server plugins still decide actual spawning.
 
 ## License and credit
 
